@@ -1,0 +1,9 @@
+# Ignore Docker bind-mount paths
+
+/portainer
+/nginx
+/tautulli
+/pihole
+/emby
+/jellyfin
+/wireguard
