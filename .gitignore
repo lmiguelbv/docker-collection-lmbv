@@ -1,4 +1,4 @@
-# Ignore Docker bind-mount paths
+# Ignored Docker bind-mount paths
 
 /portainer
 /nginx
@@ -7,3 +7,7 @@
 /emby
 /jellyfin
 /wireguard
+
+
+#Ignored Files
+.env
