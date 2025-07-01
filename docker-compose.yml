@@ -1,0 +1,210 @@
+#version: '3'
+services:
+  nginx:
+    container_name: nginx
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+
+    # Uncomment the next line if you uncomment anything in the section
+    # environment:
+      # Uncomment this if you want to change the location of
+      # the SQLite DB file within the container
+      # DB_SQLITE_FILE: "/data/database.sqlite"
+
+      # Uncomment this if IPv6 is not enabled on your host
+      # DISABLE_IPV6: 'true'
+
+    volumes:
+      - ./nginx/data:/data
+      - ./nginx/letsencrypt:/etc/letsencrypt
+
+   wireguard:
+    image: linuxserver/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${SERVER_TZ}
+      - SERVERURL=${WIREGUARD_SERVERURL} #optional - change for actual vm id
+      - SERVERPORT=51820 #optional
+      - PEERS=2 #optional
+      - PEERDNS=auto #optional
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
+      - LOG_CONFS=true #optional
+    ports:
+      - 51820:51820/udp
+    dns:
+      - 172.19.0.3
+    volumes:
+      - /docker/wireguard/config:/config
+      - /docker/wireguard/lib/modules:/lib/modules #optional
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+    # networks:
+      # containers:
+        # ipv4_address: 172.20.0.6
+
+  openvpn:
+    cap_add:
+     - NET_ADMIN
+    image: openvpn-arm64
+    container_name: openvpn
+    ports:
+     - "1194:1194/udp"
+    restart: unless-stopped
+    volumes:
+     - ./openvpn/conf:/etc/openvpn
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
+      - "8283:80/tcp"
+    environment:
+      - TZ=${SERVER_TZ}
+      - WEBPASSWORD=${PIHOLE_WEBPASSWORD}
+    # Volumes store your data between container upgrades
+    volumes:
+      - './pihole/etc-pihole:/etc/pihole'
+      - './pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
+    restart: unless-stopped
+    # networks:
+      # containers:
+        # ipv4_address: 172.20.0.7
+        # # ipam:
+         # # config:
+          # # - subnet: 172.20.0.0/24
+          
+  unbound:
+    image: madnuttah/unbound:latest
+    container_name: unbound
+    hostname: unbound
+    environment:
+      - TZ=${SERVER_TZ}
+      - UNBOUND_UID=0
+      - UNBOUND_GID=0
+    volumes:
+      - ./unbound/unbound.conf:/usr/local/unbound/unbound.conf:rw
+      - ./unbound/conf.d/:/usr/local/unbound/conf.d/:rw
+      - ./unbound/log.d/unbound.log:/usr/local/unbound/log.d/unbound.log:rw
+      - ./unbound/zones.d/:/usr/local/unbound/zones.d/:rw
+      - ./unbound/iana.d/:/usr/local/unbound/iana.d/:rw
+    ports:
+      - "5335:53/tcp"
+      - "5335:53/udp"
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    environment:
+      - TZ=${SERVER_TZ}
+    volumes:
+        - /docker/portainer:/data
+        - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+        - 8000:8000
+        - 9443:9443
+    restart: always
+
+  # networks:
+     # default:
+       # external: true
+       # name: nginx_default
+
+  plex:
+    image: linuxserver/plex:latest
+    container_name: plex
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${SERVER_TZ}
+      - VERSION=docker
+      #- PLEX_CLAIM= #optional
+    volumes:
+      - ./plex:/config
+      - ./plex/plex_transcode:/transcode
+      - /home/gdrive/Películas:/home/gdrive/Películas
+      - /home/gdrive/Series:/home/gdrive/Series
+    ports:
+      - 32400:32400
+    restart: unless-stopped
+
+  tautulli:
+    image: linuxserver/tautulli
+    container_name: tautulli
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${SERVER_TZ}
+    volumes:
+      - /docker/tautulli:/config
+    ports:
+      - 8181:8181
+    restart: unless-stopped
+
+  jellyfin:
+    image: linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${SERVER_TZ}
+      - JELLYFIN_PublishedServerUrl=${JELLYFIN_PublishedServerUrl}
+    volumes:
+      - /docker/jellyfin/config:/config
+      - /docker/jellyfin/cache:/cache
+      - /docker/jellyfin/transcodes:/config/transcodes
+      - /docker/jellyfin/media:/media
+    ports:
+      - 8296:8096
+      - 8720:8920 #optional
+      - 7459:7359/udp #optional
+      - 1800:1900/udp #optional
+    restart: 'unless-stopped'
+
+  emby:
+    image: linuxserver/emby
+    container_name: embyserver
+#    runtime: nvidia # Expose NVIDIA GPUs
+    #network_mode: host # Enable DLNA and Wake-on-Lan
+    environment:
+      - UID=0 # The UID to run emby as (default: 2)
+      - GID=0 # The GID to run emby as (default 2)
+      - GIDLIST=0 # A comma-separated list of additional GIDs to run emby as (default: 2)
+    volumes:
+      - /docker/emby:/config # Configuration directory
+      - /docker/emby:/mnt/share1 # Media directory
+      - /docker/emby:/mnt/share2 # Media directory
+    ports:
+      - 8196:8096 # HTTP port
+      - 8820:8820 # HTTPS port
+    #devices:
+      #- /dev/dri:/dev/dri # VAAPI/NVDEC/NVENC render nodes
+      #- /dev/vchiq:/dev/vchiq # MMAL/OMX on Raspberry Pi
+    restart: on-failure
+
+ # networks:
+    # default:
+       # external: true
