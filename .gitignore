@@ -1,0 +1,14 @@
+# Ignored Docker bind-mount paths
+
+/portainer
+/nginx
+/tautulli
+/pihole
+/emby
+/jellyfin
+/wireguard
+
+#Ignored Files
+.env
+/unbound/iana.d/root.key
+/unbound/iana.d/root.zone
