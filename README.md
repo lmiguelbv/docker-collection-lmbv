@@ -139,17 +139,21 @@ For other services out of Unbound, follow the mount guidelines above.
 │ ------└──logging.conf   
 │ ------└──security.conf  
 │ ------└──trust-anchor.conf  
-│ ├── iana.d/  ⛔ Excluded  
-│ ------└──root.key  ⛔ Excluded  (Auto-generated with the proper config of trust-anchor.conf file)
+│ ├── iana.d/   
+│ ------└──root.key  ⛔ Excluded  
 │ ------└──root.zone  ⛔ Excluded  
 │ ├── zones.d/  
 │ ------└──auth-zone.conf  
-│ ├── log.d/ # ⛔ Excluded  
-│ ------└── unbound.log # ⛔ Excluded (log file only: could generate a large size)  
+│ ├── log.d/ # 
+│ ------└── unbound.log # ⛔ Excluded 
   
-  
-root.zone is excluded as it can be obtained → 
-`wget https://www.internic.net/domain/root.zone` to get into **/home/pi/unbound/iana.d/**
+  **⛔ Excluded**
+-  iana.d/root.zone → can be obtained with the following command → `wget https://www.internic.net/domain/root.zone` on  **/docker/unbound/iana.d/**
+-  iana.d/root.key → security file config per set-up basis but auto-generated with the proper config of trust-anchor.conf file
+- log.d/unbound.log → a log file only: could generate a large size
+
+
+---  
 
 ## 🔧 Services Overview  
   
