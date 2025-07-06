@@ -124,8 +124,8 @@ Replace `1000:1000` with the correct UID:GID if your containers use custom users
   
 
 The following bind mount directories that **contain configuration files or scripts** (e.g., ⁣`/unbound/` → `Subfolders and files`) **are tracked**; representing crucial operational settings that may be replicated to ensure proper functionality as they are not auto-mounted or created at the moment of container initialization.  
-For other services out of Unbound, follow the mount guidelines above.    
-  
+
+For other services out of Unbound, follow the mount guidelines above.   
 
 >/docker/  
 >├──docker-compose.yml  
@@ -139,15 +139,17 @@ For other services out of Unbound, follow the mount guidelines above.
 │ ------└──logging.conf   
 │ ------└──security.conf  
 │ ------└──trust-anchor.conf  
-│ ├── iana.d/  
-│ ------└──root.key  
-│ ------└──rootzone  
+│ ├── iana.d/  ⛔ Excluded  
+│ ------└──root.key  ⛔ Excluded  (Auto-generated with the proper config of trust-anchor.conf file)
+│ ------└──root.zone  ⛔ Excluded  
 │ ├── zones.d/  
 │ ------└──auth-zone.conf  
 │ ├── log.d/ # ⛔ Excluded  
 │ ------└── unbound.log # ⛔ Excluded (log file only: could generate a large size)  
   
   
+root.zone is excluded as it can be obtained → 
+`wget https://www.internic.net/domain/root.zone` to get into **/home/pi/unbound/iana.d/**
 
 ## 🔧 Services Overview  
   

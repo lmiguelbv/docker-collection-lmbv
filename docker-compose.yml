@@ -93,7 +93,7 @@ services:
         # # ipam:
          # # config:
           # # - subnet: 172.20.0.0/24
-          
+
   unbound:
     image: madnuttah/unbound:latest
     container_name: unbound
