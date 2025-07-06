@@ -140,8 +140,8 @@ For other services out of Unbound, follow the mount guidelines above.
 │ ------└──security.conf  
 │ ------└──trust-anchor.conf  
 │ ├── iana.d/   
-│ ------└──root.key  ⛔ Excluded  
-│ ------└──root.zone  ⛔ Excluded  
+│ ------└──root.key # ⛔ Excluded  
+│ ------└──root.zone # ⛔ Excluded  
 │ ├── zones.d/  
 │ ------└──auth-zone.conf  
 │ ├── log.d/ # 
