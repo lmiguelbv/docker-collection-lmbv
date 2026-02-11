@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-
-
-##This file contains a bash script to make a backup process of Wordpress running on Docker##
-
 set -euo pipefail
 
 # ===== Config you MAY override at runtime (defaults match your compose) =====
@@ -44,3 +40,4 @@ docker run --rm -v "$WP_VOLUME":/data -v "$BACKUP_DIR":/backup alpine \
 echo "✅ Backup complete:"
 echo "  - DB dump : $BACKUP_DIR/db_${DB_NAME}_${TS}.sql"
 echo "  - Files   : $BACKUP_DIR/wp_data_${TS}.tgz"
+

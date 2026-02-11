@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:11
+    container_name: wp-db
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      # MariaDB initializes these ONLY on first run (empty data dir)
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      # MariaDB 11: use mariadb-admin instead of mysqladmin
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+#    networks:
+ #     - npm-network   # attach ONLY to the existing network
+
+  wordpress:
+    image: wordpress:latest
+    container_name: wp-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: ./.env
+    environment:
+      # WordPress -> DB connection (written into wp-config.php on first start)
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+
+      # Extra config: trust proxy HTTPS, allow http for localhost tunnel, and
+      # override URLs ONLY when accessed via localhost:8159
+      WORDPRESS_CONFIG_EXTRA: |
+        if (isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) && $$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+          $$_SERVER['HTTPS'] = 'on';
+        }
+        if (!defined('FORCE_SSL_ADMIN')) { define('FORCE_SSL_ADMIN', false); }
+        if (isset($$_SERVER['HTTP_HOST']) && $$_SERVER['HTTP_HOST'] === 'localhost:8159') {
+          if (!defined('WP_HOME'))    { define('WP_HOME', 'http://localhost:8159'); }
+          if (!defined('WP_SITEURL')) { define('WP_SITEURL', 'http://localhost:8159'); }
+        }
+    volumes:
+      - wp_data:/var/www/html
+    # Localhost-only bind on the VPS (for SSH-tunneled admin)
+    ports:
+      - "127.0.0.1:8159:80"
+#   networks:
+  #     - npm-network   # ONLY use the existing network
+
+volumes:
+  db_data:
+  wp_data:
+
+#networks:
+  # IMPORTANT: this DOES NOT create a network; it expects an existing one
+ # npm-network:
+  #  external: true

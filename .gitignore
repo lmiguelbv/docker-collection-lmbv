@@ -8,9 +8,10 @@
 /emby
 /jellyfin
 /wireguard
-/my_website
+/wordpress/backups
 
 #Ignored Files
 .env
 /unbound/iana.d/root.key
 /unbound/iana.d/root.zone
+/unbound/log.d/unbound.log
