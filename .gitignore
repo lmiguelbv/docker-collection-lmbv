@@ -2,11 +2,13 @@
 
 /portainer
 /nginx
+/npm
 /tautulli
 /pihole
 /emby
 /jellyfin
 /wireguard
+/my_website
 
 #Ignored Files
 .env

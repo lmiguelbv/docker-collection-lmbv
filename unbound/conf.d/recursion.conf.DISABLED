@@ -1,0 +1,3 @@
+server:
+  root-hints: "/usr/local/unbound/iana.d/root.hints"
+  auto-trust-anchor-file: "/usr/local/unbound/iana.d/root.key"

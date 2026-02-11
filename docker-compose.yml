@@ -1,7 +1,7 @@
 #version: '3'
 services:
-  nginx:
-    container_name: nginx
+  nginx_npm:
+    container_name: npm_app
     image: 'jc21/nginx-proxy-manager:latest'
     restart: unless-stopped
     ports:
@@ -22,10 +22,10 @@ services:
       # DISABLE_IPV6: 'true'
 
     volumes:
-      - ./nginx/data:/data
-      - ./nginx/letsencrypt:/etc/letsencrypt
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
 
-   wireguard:
+  wireguard:
     image: linuxserver/wireguard
     container_name: wireguard
     cap_add:
@@ -45,7 +45,7 @@ services:
     ports:
       - 51820:51820/udp
     dns:
-      - 172.19.0.3
+      - 172.19.0.2
     volumes:
       - /docker/wireguard/config:/config
       - /docker/wireguard/lib/modules:/lib/modules #optional
@@ -56,26 +56,14 @@ services:
       # containers:
         # ipv4_address: 172.20.0.6
 
-  openvpn:
-    cap_add:
-     - NET_ADMIN
-    image: openvpn-arm64
-    container_name: openvpn
-    ports:
-     - "1194:1194/udp"
-    restart: unless-stopped
-    volumes:
-     - ./openvpn/conf:/etc/openvpn
-
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
     # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
-      - "8283:80/tcp"
+     - "127.0.0.1:8283:80/tcp"   # Pi-hole UI only on localhost
+#     - "127.0.0.1:53:53/tcp"    # optional: local-only DNS
+#     - "127.0.0.1:53:53/udp"
     environment:
       - TZ=${SERVER_TZ}
       - WEBPASSWORD=${PIHOLE_WEBPASSWORD}
@@ -105,15 +93,24 @@ services:
     volumes:
       - ./unbound/unbound.conf:/usr/local/unbound/unbound.conf:rw
       - ./unbound/conf.d/:/usr/local/unbound/conf.d/:rw
-      - ./unbound/log.d/unbound.log:/usr/local/unbound/log.d/unbound.log:rw
+      - ./unbound/log.d/:/usr/local/unbound/log.d/:rw
       - ./unbound/zones.d/:/usr/local/unbound/zones.d/:rw
       - ./unbound/iana.d/:/usr/local/unbound/iana.d/:rw
-    ports:
-      - "5335:53/tcp"
-      - "5335:53/udp"
     healthcheck:
       disable: true
     restart: unless-stopped
+
+  doh:
+   image: satishweb/doh-server
+   container_name: doh
+   restart: unless-stopped
+   environment:
+     - UPSTREAM_DNS_SERVER=udp:pihole:53
+     - DOH_HTTP_PREFIX=/dns-query
+     - DOH_SERVER_LISTEN=:8053
+     - DOH_SERVER_TIMEOUT=10
+     - DOH_SERVER_TRIES=3
+     - DOH_SERVER_VERBOSE=true
 
   portainer:
     image: portainer/portainer-ce:latest

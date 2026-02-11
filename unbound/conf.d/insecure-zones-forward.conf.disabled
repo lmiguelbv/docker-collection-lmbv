@@ -1,0 +1,7 @@
+# Forward specific “trouble” zones via DoT to resilient upstreams
+forward-zone:
+  name: "cruzverde.com.co"
+  forward-tls-upstream: yes
+  forward-first: no
+  forward-addr: 1.1.1.1@853#cloudflare-dns.com
+  forward-addr: 1.0.0.1@853#cloudflare-dns.com
